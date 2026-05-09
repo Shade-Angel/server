@@ -36,4 +36,24 @@ model Product {
   @@map("product")
 }
 
+model Category {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
+  name  String @unique
+  slug  String @unique
+  image String
+
+  @@map("category")
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reference String @unique
+
+  @@map("order")
+}
