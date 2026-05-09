@@ -21,3 +21,19 @@ model User {
 
   @@map("user")
 }
+
+model Product {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name        String @unique
+  slug        String @unique
+  description String
+  price       Int
+  image       String
+
+  @@map("product")
+}
+
+
