@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { AuthDto } from './dto/auth.dto';
+import { User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { hash } from 'argon2';
+import { hash, verify } from 'argon2';
 import { JwtService } from '@nestjs/jwt';
+
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,7 @@ export class AuthService {
             }
         })
 
+        if (!user) throw new UnauthorizedException('User not found')
         const tokens = await this.issueTokens(user.id)
 
         return {
