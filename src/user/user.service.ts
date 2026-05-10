@@ -58,5 +58,7 @@ export class UserService {
                 }
             }
         })
+
+        return {message: 'Success'}
     }
 }
