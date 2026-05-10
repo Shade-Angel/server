@@ -1,109 +1,113 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
-import { AuthDto } from './dto/auth.dto';
-import { User } from '@prisma/client';
-import { faker } from '@faker-js/faker';
-import { hash, verify } from 'argon2';
-import { JwtService } from '@nestjs/jwt';
-
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common'
+import { PrismaService } from 'src/prisma.service'
+import { AuthDto } from './dto/auth.dto'
+import { User } from '@prisma/client'
+import { faker } from '@faker-js/faker'
+import { hash, verify } from 'argon2'
+import { JwtService } from '@nestjs/jwt'
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private prisma: PrismaService, 
-        private jwt: JwtService
-    ){}
+	constructor(
+		private prisma: PrismaService,
+		private jwt: JwtService
+	) {}
 
-    async login (dto: AuthDto) {
-        const user = await this.validateUser(dto)
-        const tokens = await this.issueTokens(user.id)
+	async login(dto: AuthDto) {
+		const user = await this.validateUser(dto)
+		const tokens = await this.issueTokens(user.id)
 
-        return {
-            user: this.retrnUserFields(user),
-            ...tokens
-        }
-    }
+		return {
+			user: this.retrnUserFields(user),
+			...tokens
+		}
+	}
 
-    async getNewTokens(refreshToken: string) {
-        const result = await this.jwt.verifyAsync(refreshToken)
-        if(!result) throw new UnauthorizedException('Invalid refresh token')
+	async getNewTokens(refreshToken: string) {
+		const result = await this.jwt.verifyAsync(refreshToken)
+		if (!result) throw new UnauthorizedException('Invalid refresh token')
 
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: result.id
-            }
-        })
+		const user = await this.prisma.user.findUnique({
+			where: {
+				id: result.id
+			}
+		})
 
-        if (!user) throw new UnauthorizedException('User not found')
-        const tokens = await this.issueTokens(user.id)
+		if (!user) throw new UnauthorizedException('User not found')
+		const tokens = await this.issueTokens(user.id)
 
-        return {
-            user: this.retrnUserFields(user),
-            ...tokens
-        }
-    }
+		return {
+			user: this.retrnUserFields(user),
+			...tokens
+		}
+	}
 
-    async register(dto: AuthDto){
-        const oldUser = await this.prisma.user.findUnique({
-            where: {
-                email: dto.email
-            }
-        })
+	async register(dto: AuthDto) {
+		const oldUser = await this.prisma.user.findUnique({
+			where: {
+				email: dto.email
+			}
+		})
 
-        if(oldUser) throw new BadRequestException('User already exists')
+		if (oldUser) throw new BadRequestException('User already exists')
 
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                name: faker.person.firstName(),
-                avatarPath: faker.image.avatar(),
-                phone: faker.phone.number(),
-                password: await hash(dto.password)
-            }
-        })
+		const user = await this.prisma.user.create({
+			data: {
+				email: dto.email,
+				name: faker.person.firstName(),
+				avatarPath: faker.image.avatar(),
+				phone: faker.phone.number(),
+				password: await hash(dto.password)
+			}
+		})
 
-        const tokens = await this.issueTokens(user.id)
+		const tokens = await this.issueTokens(user.id)
 
-        return {
-            user: this.retrnUserFields(user),
-            ...tokens
-        }
-    }
+		return {
+			user: this.retrnUserFields(user),
+			...tokens
+		}
+	}
 
-    private async issueTokens(userId: string) {
-        const data = { id: userId }
-        
-        const accessToken = this.jwt.sign(data, {
-            expiresIn: '1h'
-        })
+	private async issueTokens(userId: string) {
+		const data = { id: userId }
 
-        const refreshToken = this.jwt.sign(data, {
-            expiresIn: '7d'
-        })
+		const accessToken = this.jwt.sign(data, {
+			expiresIn: '1h'
+		})
 
-        return { accessToken, refreshToken }
-    }
+		const refreshToken = this.jwt.sign(data, {
+			expiresIn: '7d'
+		})
 
-    private retrnUserFields(user: User) {
-        return {
-            id: user.id, 
-            email: user.email
-        }
-    }
+		return { accessToken, refreshToken }
+	}
 
-    private async validateUser(dto: AuthDto) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email: dto.email
-            }
-        })
+	private retrnUserFields(user: User) {
+		return {
+			id: user.id,
+			email: user.email
+		}
+	}
 
-        if(!user) throw new NotFoundException('User not found')
+	private async validateUser(dto: AuthDto) {
+		const user = await this.prisma.user.findUnique({
+			where: {
+				email: dto.email
+			}
+		})
 
-        const isValid = await verify(user.password, dto.password)
+		if (!user) throw new NotFoundException('User not found')
 
-        if(!isValid) throw new UnauthorizedException('Invalid password')
+		const isValid = await verify(user.password, dto.password)
 
-        return user
-    }
+		if (!isValid) throw new UnauthorizedException('Invalid password')
+
+		return user
+	}
 }

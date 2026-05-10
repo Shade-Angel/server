@@ -12,38 +12,38 @@ export class ProductService {
 		private categoryService: CategoryService
 	) {}
 
-    async getAll(searchTerm?: string) {
-        if(searchTerm) return this.search(searchTerm)
+	async getAll(searchTerm?: string) {
+		if (searchTerm) return this.search(searchTerm)
 
-        return this.prisma.product.findMany({
-            select: returnProductObject,
-            orderBy: {
-                createdAt: 'desc'
-            }
-        })
-    }
+		return this.prisma.product.findMany({
+			select: returnProductObject,
+			orderBy: {
+				createdAt: 'desc'
+			}
+		})
+	}
 
-    async search(searchTerm: string) {
-        return this.prisma.product.findMany({
-            where: {
-                OR: [
-                    {
-                        name: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
-                        }
-                    },
-                    {
-                        description: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
-                        }
-                    }
-                ]
-            },
-            select: returnProductObject
-        })
-    }
+	async search(searchTerm: string) {
+		return this.prisma.product.findMany({
+			where: {
+				OR: [
+					{
+						name: {
+							contains: searchTerm,
+							mode: 'insensitive'
+						}
+					},
+					{
+						description: {
+							contains: searchTerm,
+							mode: 'insensitive'
+						}
+					}
+				]
+			},
+			select: returnProductObject
+		})
+	}
 
 	async bySlug(slug: string) {
 		const product = await this.prisma.product.findUnique({
@@ -98,7 +98,7 @@ export class ProductService {
 				name,
 				description,
 				price,
-                image,
+				image,
 				slug: generateSlug(name),
 				category: {
 					connect: {
