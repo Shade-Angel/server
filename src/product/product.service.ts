@@ -13,8 +13,13 @@ export class ProductService {
 	) {}
 
     async getAll(searchTerm?: string) {
+        if(searchTerm) return this.search(searchTerm)
+
         return this.prisma.product.findMany({
-            select: returnProductObject
+            select: returnProductObject,
+            orderBy: {
+                createdAt: 'desc'
+            }
         })
     }
 
@@ -35,7 +40,8 @@ export class ProductService {
                         }
                     }
                 ]
-            }
+            },
+            select: returnProductObject
         })
     }
 
@@ -92,6 +98,7 @@ export class ProductService {
 				name,
 				description,
 				price,
+                image,
 				slug: generateSlug(name),
 				category: {
 					connect: {
