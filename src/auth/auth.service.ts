@@ -11,6 +11,10 @@ import { faker } from '@faker-js/faker'
 import { hash, verify } from 'argon2'
 import { JwtService } from '@nestjs/jwt'
 
+interface JwtPayload {
+	id: string
+}
+
 @Injectable()
 export class AuthService {
 	constructor(
@@ -23,13 +27,13 @@ export class AuthService {
 		const tokens = await this.issueTokens(user.id)
 
 		return {
-			user: this.retrnUserFields(user),
+			user: this.returnUserFields(user),
 			...tokens
 		}
 	}
 
 	async getNewTokens(refreshToken: string) {
-		const result = await this.jwt.verifyAsync(refreshToken)
+		const result = await this.jwt.verifyAsync<JwtPayload>(refreshToken)
 		if (!result) throw new UnauthorizedException('Invalid refresh token')
 
 		const user = await this.prisma.user.findUnique({
@@ -42,7 +46,7 @@ export class AuthService {
 		const tokens = await this.issueTokens(user.id)
 
 		return {
-			user: this.retrnUserFields(user),
+			user: this.returnUserFields(user),
 			...tokens
 		}
 	}
@@ -69,7 +73,7 @@ export class AuthService {
 		const tokens = await this.issueTokens(user.id)
 
 		return {
-			user: this.retrnUserFields(user),
+			user: this.returnUserFields(user),
 			...tokens
 		}
 	}
@@ -77,25 +81,25 @@ export class AuthService {
 	private async issueTokens(userId: string) {
 		const data = { id: userId }
 
-		const accessToken = this.jwt.sign(data, {
+		const accessToken = await this.jwt.signAsync(data, {
 			expiresIn: '1h'
 		})
 
-		const refreshToken = this.jwt.sign(data, {
+		const refreshToken = await this.jwt.signAsync(data, {
 			expiresIn: '7d'
 		})
 
 		return { accessToken, refreshToken }
 	}
 
-	private retrnUserFields(user: User) {
+	private returnUserFields(user: User) {
 		return {
 			id: user.id,
 			email: user.email
 		}
 	}
 
-	private async validateUser(dto: AuthDto) {
+	private async validateUser(dto: AuthDto): Promise<User> {
 		const user = await this.prisma.user.findUnique({
 			where: {
 				email: dto.email
